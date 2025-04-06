@@ -1,66 +1,30 @@
-/********************************** (C) COPYRIGHT *******************************
- * File Name          : main.c
- * Author             : WCH
- * Version            : V1.0.0
- * Date               : 2023/12/25
- * Description        : Main program body.
- *********************************************************************************
- * Copyright (c) 2021 Nanjing Qinheng Microelectronics Co., Ltd.
- * Attention: This software (modified or not) and binary are used for 
- * microcontroller manufactured by Nanjing Qinheng Microelectronics.
- *******************************************************************************/
-
-/*
- * @Note
- * Multiprocessor communication mode routine:
- * Master: USART1_Tx(PD5)\USART1_Rx(PD6).
- * This routine demonstrates that USART1 receives the data sent by CH341 and inverts
- * it and sends it (baud rate 115200).
- *
- * Hardware connection: PD5 -- Rx
- *                      PD6 -- Tx
- */
-
 #include "debug.h"
 
+#define I2C_CLOCK_SPEED   100000
 
-/* Global define */
-
-
-/* Global Variable */
-vu8 val;
-
-/*********************************************************************
- * @fn      USARTx_CFG
- *
- * @brief   Initializes the USART2 & USART3 peripheral.
- *
- * @return  none
+/**
+ * Init 
  */
-void USARTx_CFG(void) {
-  GPIO_InitTypeDef  GPIO_InitStructure = {0};
-  USART_InitTypeDef USART_InitStructure = {0};
+void init() {
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO | RCC_APB2Periph_GPIOC, ENABLE);
 
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD | RCC_APB2Periph_USART1, ENABLE);
+    GPIO_InitTypeDef GPIO_InitStructure={0};
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-  /* USART1 TX-->D.5   RX-->D.6 */
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_30MHz;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-  GPIO_Init(GPIOD, &GPIO_InitStructure);
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-  GPIO_Init(GPIOD, &GPIO_InitStructure);
+    I2C_InitTypeDef I2C_InitTSturcture={0};
+    I2C_InitTSturcture.I2C_ClockSpeed = I2C_CLOCK_SPEED;
+    I2C_InitTSturcture.I2C_Mode = I2C_Mode_I2C;
+    I2C_InitTSturcture.I2C_DutyCycle = I2C_DutyCycle_16_9;
+    I2C_InitTSturcture.I2C_OwnAddress1 = 0x00;
+    I2C_InitTSturcture.I2C_Ack = I2C_Ack_Enable;
+    I2C_InitTSturcture.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
+    I2C_Init(I2C1, &I2C_InitTSturcture);
 
-  USART_InitStructure.USART_BaudRate = 115200;
-  USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-  USART_InitStructure.USART_StopBits = USART_StopBits_1;
-  USART_InitStructure.USART_Parity = USART_Parity_No;
-  USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-  USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
-
-  USART_Init(USART1, &USART_InitStructure);
-  USART_Cmd(USART1, ENABLE);
+    I2C_Cmd(I2C1, ENABLE);
 }
 
 /*********************************************************************
@@ -79,12 +43,12 @@ int main(void) {
 #else
   USART_Printf_Init(115200);
 #endif
-  printf("SystemClk:%d\r\n",SystemCoreClock);
-  printf( "ChipID:%08x\r\n", DBGMCU_GetCHIPID() );
+  printf("SystemClk: %d\r\n",SystemCoreClock);
+  printf("ChipID: %08x\r\n", DBGMCU_GetCHIPID() );
 
-  USARTx_CFG();
+  init();
 
-  while(1) {
+  while (1) {
     while(USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET) {
       /* waiting for receiving finish */
     }
