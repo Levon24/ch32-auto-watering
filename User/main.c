@@ -27,6 +27,37 @@ void init() {
     I2C_Cmd(I2C1, ENABLE);
 }
 
+uint8_t checkAddress(uint8_t address, uint8_t max) {
+  uint8_t count = 0;
+  
+  while (I2C_GetFlagStatus(I2C1, I2C_FLAG_BUSY) != RESET) {
+    count++;
+    if (count >= max) {
+      return 0;
+    }
+  }
+
+  I2C_GenerateSTART(I2C1, ENABLE);
+  while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT)) {
+    count++;
+    if (count >= max) {
+      return 0;
+    }
+  }
+
+  I2C_Send7bitAddress(I2C1, address, I2C_Direction_Transmitter);
+  while (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED)) {
+    count++;
+    if (count >= max) {
+      return 0;
+    }
+  }
+
+  I2C_GenerateSTOP(I2C1, ENABLE);
+
+  return 1;
+}
+
 /*********************************************************************
  * @fn      main
  *
@@ -43,19 +74,13 @@ int main(void) {
 #else
   USART_Printf_Init(115200);
 #endif
-  printf("SystemClk: %d\r\n",SystemCoreClock);
-  printf("ChipID: %08x\r\n", DBGMCU_GetCHIPID() );
+  printf("SystemClk: %d\r\n", SystemCoreClock);
+  printf("ChipID: %08x\r\n", DBGMCU_GetCHIPID());
 
   init();
 
-  while (1) {
-    while(USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == RESET) {
-      /* waiting for receiving finish */
-    }
-    val = (USART_ReceiveData(USART1));
-    USART_SendData(USART1, ~val);
-    while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET) {
-      /* waiting for sending finish */
-    }
+  for (uint8_t address = 1; address < 128; address++) {
+    uint8_t status = checkAddress(address, 255);
+    printf("Address: %d -> Status: %d\r\n", address, status);
   }
 }
