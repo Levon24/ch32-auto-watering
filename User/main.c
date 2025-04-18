@@ -1,7 +1,9 @@
 #include "debug.h"
 #include "oled.h"
+#include "fonts.h"
 
 uint8_t displayBuffer[128];
+extern const uint8_t font8x8[][8];
 
 /**
  * Initialization
@@ -53,13 +55,18 @@ int main(void) {
   oledInit();
   //oledSetCursor(0, 0);
 
-  for (uint8_t page = 0; page < 4; page++) {	
-		for (uint8_t column = 0; column < 128; column++) {
-			displayBuffer[column] = (column & 0x01) > 0 ? 0xFF : 0x01;
+  uint8_t symbol = ' ';
+
+  for (uint8_t page = 0; page < 4; page++) {
+		for (uint8_t column = 0; column < 16; column++) {
+      symbol++;
+      for (uint8_t p = 0; p < 8; p++) {
+        displayBuffer[column * 8 + p] = font8x8[symbol - 0x20][p];
+      }		
 		}
     oledWriteData(page, displayBuffer, sizeof(displayBuffer));
 
-    Delay_Ms(5000);
+    Delay_Ms(1000);
 	}
 
   while (1) {
