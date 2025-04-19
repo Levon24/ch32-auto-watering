@@ -1,5 +1,16 @@
 #include <stdio.h>
 
+/*
+   Constant: font8x8_basic_tr
+   Contains an 90 digree transposed 8x8 font map for unicode points 
+   U+0000 - U+007F (basic latin)
+   
+   To make it easy to use with SSD1306's GDDRAM mapping and API,
+   this constant is an 90 degree transposed.
+   The original version written by Marcel Sondaar is availble at:
+   https://github.com/dhepper/font8x8/blob/master/font8x8_basic.h 
+*/
+
 const uint8_t font8x8[][8] = {
   { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },   // U+0020 (space)
   { 0x00, 0x00, 0x06, 0x5F, 0x5F, 0x06, 0x00, 0x00 },   // U+0021 (!)
