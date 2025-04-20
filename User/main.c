@@ -57,7 +57,7 @@ int main(void) {
 
   uint8_t symbol = ' ';
 
-  for (uint8_t page = 0; page < 4; page++) {
+  for (uint8_t page = 0; page < 3; page++) {
 		for (uint8_t column = 0; column < 16; column++) {
       symbol++;
       for (uint8_t p = 0; p < 8; p++) {
@@ -65,11 +65,12 @@ int main(void) {
       }		
 		}
     oledWriteData(page, displayBuffer, sizeof(displayBuffer));
-
-    Delay_Ms(1000);
 	}
 
+  print("Katerina, Mur!!!", displayBuffer);
+  oledWriteData(3, displayBuffer, sizeof(displayBuffer));
+
   while (1) {
-  
+    
   }
 }

@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 // 
+void print(char *text, uint8_t *buffer);
 
 #ifdef __cplusplus
 }

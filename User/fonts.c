@@ -108,3 +108,16 @@ const uint8_t font8x8[][8] = {
   { 0x41, 0x41, 0x77, 0x3E, 0x08, 0x08, 0x00, 0x00 },   // U+007D (})
   { 0x02, 0x03, 0x01, 0x03, 0x02, 0x03, 0x01, 0x00 }    // U+007E (~)
 };
+
+void print(char *text, uint8_t *buffer) {
+  while (*text > 0) {
+    if (*text > 0x1F && *text < 0x7F) {
+      uint8_t b = *text - 0x20;
+      for (uint8_t p = 0; p < 8; p++) {
+        *buffer = font8x8[b][p];
+        buffer++;
+      }
+    }
+    text++;
+  }
+}
