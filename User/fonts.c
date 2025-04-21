@@ -109,6 +109,12 @@ const uint8_t font8x8[][8] = {
   { 0x02, 0x03, 0x01, 0x03, 0x02, 0x03, 0x01, 0x00 }    // U+007E (~)
 };
 
+/**
+ * Print some text to display buffer
+ * 
+ * @param text 
+ * @param buffer 
+ */
 void print(char *text, uint8_t *buffer) {
   while (*text > 0) {
     if (*text > 0x1F && *text < 0x7F) {
