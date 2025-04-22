@@ -7,6 +7,7 @@ extern "C" {
 
 // Functions
 void print(char *text, uint8_t *buffer);
+void clear(uint8_t *buffer, uint8_t size);
 
 #ifdef __cplusplus
 }

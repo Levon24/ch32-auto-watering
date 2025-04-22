@@ -127,3 +127,14 @@ void print(char *text, uint8_t *buffer) {
     text++;
   }
 }
+
+/**
+ * clear text in display buffer
+ * 
+ * @param buffer 
+ */
+void clear(uint8_t *buffer, uint8_t size) {
+  for (uint8_t p = 0; p < size; p++) {
+    buffer[p] = 0;
+  }
+}
