@@ -189,8 +189,8 @@ int main(void) {
 
     uint16_t adcValue = getAdcValue(ADC_Channel_0);
     humidity = (1023 - adcValue) / 10;
-    sprintf(buff, "H: %d.", humidity);// F: %4i", humidity, flood);
-    print(buff, displayBuffer);
+    sprintf(buff, "H: %3d, F: %4d.", humidity, flood);
+    text(buff, displayBuffer);
     oledWriteData(3, displayBuffer, sizeof(displayBuffer));
 
     if (humidity < HUMIDITY && flood < FLOOD_MAX) {

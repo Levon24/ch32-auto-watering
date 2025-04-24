@@ -1,4 +1,5 @@
-#include "debug.h"
+#include <stdio.h>
+#include <ch32v00x.h>
 #include "oled.h"
 
 /**

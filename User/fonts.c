@@ -115,7 +115,7 @@ const uint8_t font8x8[][8] = {
  * @param text 
  * @param buffer 
  */
-void print(char *text, uint8_t *buffer) {
+void text(char *text, uint8_t *buffer) {
   while (*text > 0) {
     uint8_t b = *text - 0x20;
     for (uint8_t p = 0; p < 8; p++) {
