@@ -117,12 +117,10 @@ const uint8_t font8x8[][8] = {
  */
 void print(char *text, uint8_t *buffer) {
   while (*text > 0) {
-    if (*text > 0x1F && *text < 0x7F) {
-      uint8_t b = *text - 0x20;
-      for (uint8_t p = 0; p < 8; p++) {
-        *buffer = font8x8[b][p];
-        buffer++;
-      }
+    uint8_t b = *text - 0x20;
+    for (uint8_t p = 0; p < 8; p++) {
+      *buffer = font8x8[b][p];
+      buffer++;
     }
     text++;
   }

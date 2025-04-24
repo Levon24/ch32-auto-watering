@@ -36,7 +36,7 @@
 #define SDI_PR_OPEN    1
 
 #ifndef SDI_PRINT
-#define SDI_PRINT   SDI_PR_OPEN
+#define SDI_PRINT   SDI_PR_CLOSE
 #endif
 
 void Delay_Init(void);
