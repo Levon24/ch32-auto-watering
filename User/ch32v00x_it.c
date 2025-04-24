@@ -21,8 +21,11 @@ void HardFault_Handler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
  *
  * @return  none
  */
-void NMI_Handler(void) {
-  NVIC_SystemReset();
+void NMI_Handler(void)
+{
+  while (1)
+  {
+  }
 }
 
 /*********************************************************************
@@ -32,6 +35,12 @@ void NMI_Handler(void) {
  *
  * @return  none
  */
-void HardFault_Handler(void) {
+void HardFault_Handler(void)
+{
   NVIC_SystemReset();
+  while (1)
+  {
+  }
 }
+
+
