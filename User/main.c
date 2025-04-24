@@ -131,6 +131,8 @@ void TIM2_IRQHandler(void) {
     if (displaySec < DISPLAY_SEC) {
       displaySec++;
     } else {
+      displaySec = 0;
+      
       for (uint8_t p = 0; p < 127; p++) {
         displayGraf[p + 1] = displayGraf[p];
       }
