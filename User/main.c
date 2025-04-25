@@ -7,11 +7,11 @@
 
 #define ANALOG_PIN  GPIO_Pin_0
 #define PUMP_PIN    GPIO_Pin_2
-#define MOISTURE    60 // Цель для влажности почвы
+#define MOISTURE    60  // Цель для влажности почвы
 #define DELAY_MS    200 // Задержка в основном цикле
-#define FLOOD_STEP  100 // Сколько за шаг полива добавлять счетчик потопа
-#define FLOOD_MAX   (30 * DELAY_MS) // 30 секунд максимум лить воду до потопа
-#define DISPLAY_SEC 60 // Через сколько секунд график сдвигать вправо
+#define FLOOD_STEP  50  // Сколько за шаг полива добавлять в счетчик потопа
+#define FLOOD_MAX   (30 * FLOOD_STEP * 1000 / DELAY_MS) // 30 секунд максимум лить воду до потопа
+#define DISPLAY_SEC 60  // Через сколько секунд график сдвигать вправо
 
 uint8_t displaySec = 0;
 uint8_t displayBuffer[128];
