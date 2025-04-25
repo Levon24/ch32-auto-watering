@@ -7,17 +7,19 @@
 
 #define ANALOG_PIN  GPIO_Pin_0
 #define PUMP_PIN    GPIO_Pin_2
-#define HUMIDITY    60
-#define FLOOD_STEP  100
-#define FLOOD_MAX   6000
-#define DISPLAY_SEC 60
+#define MOISTURE    60 // Цель для влажности почвы
+#define DELAY_MS    200 // Задержка в основном цикле
+#define FLOOD_STEP  100 // Сколько за шаг полива добавлять счетчик потопа
+#define FLOOD_MAX   (30 * DELAY_MS) // 30 секунд максимум лить воду до потопа
+#define DISPLAY_SEC 60 // Через сколько секунд график сдвигать вправо
 
 uint8_t displaySec = 0;
 uint8_t displayBuffer[128];
 uint8_t displayGraf[128];
 extern const uint8_t font8x8[][8];
+const uint8_t levels[] = {0b00000000, 0b10000000, 0b11000000, 0b11100000, 0b11110000, 0b11111000, 0b11111100, 0b11111110, 0b11111111};
 
-uint8_t humidity = 0;
+uint8_t moisture = 0;
 
 /**
  * @brief Initialization
@@ -133,10 +135,10 @@ void TIM2_IRQHandler(void) {
     } else {
       displaySec = 0;
       
-      for (uint8_t p = 0; p < 127; p++) {
-        displayGraf[p + 1] = displayGraf[p];
+      for (uint8_t p = 127; p > 0; p--) {
+        displayGraf[p] = displayGraf[p - 1];
       }
-      displayGraf[0] = humidity;
+      displayGraf[0] = moisture;
     }
     
     
@@ -168,37 +170,42 @@ int main(void) {
   init();
   oledInit();
 
-  uint8_t symbol = ' ';
-
-  for (uint8_t page = 0; page < 4; page++) {
-		for (uint8_t column = 0; column < 16; column++) {
-      //symbol++;
-      uint8_t b = symbol - 0x20;
-      for (uint8_t p = 0; p < 8; p++) {
-        displayBuffer[column * 8 + p] = font8x8[b][p];
-      }		
-		}
-    oledWriteData(page, displayBuffer, sizeof(displayBuffer));
-	}
-
   char buff[17];
   uint16_t flood = 0;
 
   while (1) {
     GPIO_WriteBit(GPIOD, PUMP_PIN, Bit_RESET);
 
+    // Graf
+    for (uint8_t level = 0; level < 3; level++) {
+      for (uint8_t p = 0; p < 128; p++) {
+        if (displayGraf[p] > (2 - level) * 32) {
+          uint8_t l = (displayGraf[p] - (2 - level) * 32) >> 2;
+          if (l > 8) {
+            l = 8;
+          }
+          displayBuffer[p] = levels[l];
+        } else {
+          displayBuffer[p] = 0;
+        }
+      }
+      oledWriteData(level, displayBuffer, sizeof(displayBuffer));
+    }
+
+
+    // Values
     uint16_t adcValue = getAdcValue(ADC_Channel_0);
-    humidity = (1023 - adcValue) / 10;
-    sprintf(buff, "H: %3d, F: %4d.", humidity, flood);
+    moisture = (1023 - adcValue) / 10;
+    sprintf(buff, "M: %3d, F: %4d.", moisture, flood);
     text(buff, displayBuffer);
     oledWriteData(3, displayBuffer, sizeof(displayBuffer));
 
-    if (humidity < HUMIDITY && flood < FLOOD_MAX) {
+    if (moisture < MOISTURE && flood < FLOOD_MAX) {
       GPIO_WriteBit(GPIOD, PUMP_PIN, Bit_SET);
       flood = flood + FLOOD_STEP;
     }
 
-    Delay_Ms(500);
+    Delay_Ms(DELAY_MS);
     if (flood > 0) {
       flood--;
     }
