@@ -5,16 +5,16 @@
 #define _TIM2_PSC   ((SystemCoreClock / 1000) - 1)
 #define _TIM2_ARR   (1000 - 1)
 
-#define SENSOR_TYPE 1
+#define SENSOR_CAP  1   // Емкостной датчик?
 #define SENSOR_PIN  GPIO_Pin_0
 #define PUMP_PIN    GPIO_Pin_2
-#define MOISTURE    70  // Цель для влажности почвы
+#define MOISTURE    60  // Цель для влажности почвы
 #define DELAY_MS    200 // Задержка в основном цикле
 #define FLOOD_STEP  50  // Сколько за шаг полива добавлять в счетчик потопа
 #define FLOOD_MAX   (30 * FLOOD_STEP * 1000 / DELAY_MS) // 30 секунд максимум лить воду до потопа
 #define DISPLAY_SEC 30  // Через сколько секунд график сдвигать вправо
-#define ADC_0       720
-#define ADC_100     620
+#define ADC_0       720 // Калибровка для емкостного датчика 0 влажности
+#define ADC_100     620 // Калибровка для емкостного датчика 100 влажности
 
 
 uint8_t displaySec = 0;
@@ -199,8 +199,8 @@ int main(void) {
 
     // Values
     uint16_t adcValue = getAdcValue(ADC_Channel_0);
+#if (SENSOR_CAP == 1)
     printf("ADC: %d\r\n", adcValue);
-#if (SENSOR_TYPE == 2)
     moisture = ADC_0 - adcValue;
 #else
     moisture = (1023 - adcValue) / 10;
