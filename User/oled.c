@@ -105,7 +105,7 @@ void oledInit() {
   oledWriteCommand(0x07);
 
   oledWriteCommand(SSD1306_SET_CONTRAST);
-  oledWriteCommand(0xCF);
+  oledWriteCommand(0x7F);
 
   oledWriteCommand(SSD1306_SET_PRE_CHARGE);
   oledWriteCommand(0xF1);
