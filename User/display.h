@@ -12,6 +12,8 @@ extern "C" {
 #define DISPLAY_I2C_ADDRESS  0x78
 #define DISPLAY_I2C_WAIT     250
 
+#define DISPLAY_DEFAULT_CONTRAST  0x7F
+
 // commands
 #define SSD1306_DISPLAY_OFF                     0xAE
 #define SSD1306_DISPLAY_ON                      0xAF
@@ -49,15 +51,22 @@ extern "C" {
 #define DISPLAY_CMD_DISPLAY_ON			  0xAF
 #define DISPLAY_CMD_NORMAL_DISPLAY		0xA6
 #define DISPLAY_CMD_INVERSE_DISPLAY	  0xA7
-#define DISPLAY_CMD_SET_BRIGHTNESS		0x81
 
-#define DISPLAY_SHOW_CHART      0x00
-#define DISPLAY_SHOW_SETTINGS   0x01
+enum _state {
+  show_chart, 
+  show_settings
+};
+
+enum _setup {
+  setup_min_moisture,
+  setup_contrast
+};
 
 void displayInit();
 void displaySend(uint8_t command, uint8_t *data, uint8_t size);
 void displaySetCursor(uint8_t x, uint8_t y);
 void displaySendData(uint8_t page,uint8_t *data, uint8_t size);
+void displaySetContrast(uint8_t value);
 
 #ifdef __cplusplus
 }

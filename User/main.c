@@ -9,23 +9,32 @@
 #define SENSOR_PIN      GPIO_Pin_0
 #define PUMP_PIN        GPIO_Pin_2
 #define MOISTURE        60  // Цель для влажности почвы
-#define DELAY_MS        200 // Задержка в основном цикле
+#define DELAY_MS        250 // Задержка в основном цикле
 #define FLOOD_STEP      50  // Сколько за шаг полива добавлять в счетчик потопа
 #define FLOOD_MAX       (30 * FLOOD_STEP * 1000 / DELAY_MS) // 30 секунд максимум лить воду до потопа
 #define DISPLAY_SECONDS 30  // Через сколько секунд график сдвигать вправо
 #define ADC_0           720 // Калибровка для емкостного датчика 0 влажности
 #define ADC_100         620 // Калибровка для емкостного датчика 100 влажности
 
+#define BUTTON_SETTINGS GPIO_Pin_3
+#define BUTTON_NEXT     GPIO_Pin_4
+#define BUTTON_UP       GPIO_Pin_5
+#define BUTTON_DOWN     GPIO_Pin_6
+#define BUTTON_PRESSED  0
+
 uint8_t seconds = 0;
-uint8_t chartBuffer[128];
+uint8_t displayLine[128];
 uint8_t chartValues[128];
-uint8_t displayState = DISPLAY_SHOW_CHART;
+enum _state state = show_chart;
+enum _setup setup = setup_min_moisture; 
 uint16_t flood = 0;
 
 extern const uint8_t font8x8[][8];
 const uint8_t levels[] = {0b00000000, 0b10000000, 0b11000000, 0b11100000, 0b11110000, 0b11111000, 0b11111100, 0b11111110, 0b11111111};
 
+uint8_t contrast = DISPLAY_DEFAULT_CONTRAST;
 uint8_t moisture = 0;
+uint8_t minMoisture = MOISTURE;
 
 /**
  * @brief Init Port A
@@ -45,11 +54,18 @@ void initPortA() {
 void initPortC() {
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
   
-  GPIO_InitTypeDef initTypeDef = {0};
-  initTypeDef.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2;
-  initTypeDef.GPIO_Mode = GPIO_Mode_AF_OD;
-  initTypeDef.GPIO_Speed = GPIO_Speed_30MHz;
-  GPIO_Init(GPIOC, &initTypeDef);
+  GPIO_InitTypeDef initI2C = {0};
+  initI2C.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2;
+  initI2C.GPIO_Mode = GPIO_Mode_AF_OD;
+  initI2C.GPIO_Speed = GPIO_Speed_30MHz;
+  GPIO_Init(GPIOC, &initI2C);
+
+  GPIO_InitTypeDef initButtons = {0};
+  initButtons.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6;
+  initButtons.GPIO_Mode = GPIO_Mode_IPU;
+  initButtons.GPIO_Speed = GPIO_Speed_30MHz;
+  GPIO_Init(GPIOC, &initButtons);
+
 }
 
 /**
@@ -206,7 +222,7 @@ void readMoisture() {
  * @brief pump control
  */
 void turnPump() {
-  if (moisture < MOISTURE && flood < FLOOD_MAX) {
+  if (moisture < minMoisture && flood < FLOOD_MAX) {
     GPIO_WriteBit(GPIOD, PUMP_PIN, Bit_SET);
     flood = flood + FLOOD_STEP;
   } else {
@@ -221,7 +237,7 @@ void turnPump() {
 /**
  * @brief display graf
  */
-void showChart() {
+void showChart(uint16_t buttons) {
   char buff[17];
   
   for (uint8_t level = 0; level < 3; level++) {
@@ -231,24 +247,88 @@ void showChart() {
         if (l > 8) {
           l = 8;
         }
-        chartBuffer[p] = levels[l];
+        displayLine[p] = levels[l];
       } else {
-        chartBuffer[p] = 0;
+        displayLine[p] = 0;
       }
     }
-    displaySendData(level, chartBuffer, sizeof(chartBuffer));
+    displaySendData(level, displayLine, sizeof(displayLine));
   }
 
   sprintf(buff, "M: %3d, F: %4d.", moisture, flood);
-  text(buff, chartBuffer);
-  displaySendData(3, chartBuffer, sizeof(chartBuffer));
+  text(buff, displayLine);
+  displaySendData(3, displayLine, sizeof(displayLine));
+
+  if ((buttons & BUTTON_SETTINGS) == BUTTON_PRESSED) {
+    state = show_settings;
+  }
 }
 
 /**
  * @brief display settings
  */
-void showSettings() {
+void showSettings(uint16_t buttons) {
+  char buff[17];
 
+  text(" -= Settings =- ", displayLine);
+  displaySendData(0, displayLine, sizeof(displayLine));
+
+  sprintf(buff, "%s Moisture: %3d", (setup == setup_min_moisture ? ">" : " "), minMoisture);
+  text(buff, displayLine);
+  displaySendData(1, displayLine, sizeof(displayLine));
+
+  sprintf(buff, "%s Contrast: %3d", (setup == setup_contrast ? ">" : " "), contrast);
+  text(buff, displayLine);
+  displaySendData(2, displayLine, sizeof(displayLine));
+
+  clear(displayLine, sizeof(displayLine));
+  displaySendData(3, displayLine, sizeof(displayLine));
+
+  if ((buttons & BUTTON_SETTINGS) == BUTTON_PRESSED) {
+    state = show_chart;
+  }
+
+  if ((buttons & BUTTON_NEXT) == BUTTON_PRESSED) {
+    if (setup < setup_contrast) {
+      setup++;
+    } else {
+      setup = setup_min_moisture;
+    }
+  }
+
+  if ((buttons & BUTTON_UP) == BUTTON_PRESSED) {
+    switch (setup) {
+      case setup_min_moisture:
+        if (minMoisture < 100) {
+          minMoisture++;
+        }
+        break;
+
+      case setup_contrast:
+        if (contrast < 0xFF) {
+          contrast++;
+          displaySetContrast(contrast);
+        }
+        break;
+    }
+  }
+
+  if ((buttons & BUTTON_DOWN) == BUTTON_PRESSED) {
+    switch (setup) {
+      case setup_min_moisture:
+        if (minMoisture > 0) {
+          minMoisture--;
+        }
+        break;
+
+      case setup_contrast:
+        if (contrast > 0) {
+          contrast--;
+          displaySetContrast(contrast);
+        }
+        break;
+    }
+  }
 }
 
 /*********************************************************************
@@ -279,13 +359,14 @@ int main(void) {
     readMoisture();
     turnPump();
 
-    switch (displayState) {
-      case DISPLAY_SHOW_CHART:
-        showChart();
+    uint16_t buttons = GPIO_ReadInputData(GPIOC);
+    switch (state) {
+      case show_chart:
+        showChart(buttons);
         break;
       
-      case DISPLAY_SHOW_SETTINGS:
-        showSettings();
+      case show_settings:
+        showSettings(buttons); 
         break;
     }
     

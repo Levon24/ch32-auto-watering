@@ -105,7 +105,7 @@ void displayInit() {
   displaySendCommand(0x07);
 
   displaySendCommand(SSD1306_SET_CONTRAST);
-  displaySendCommand(0x7F);
+  displaySendCommand(DISPLAY_DEFAULT_CONTRAST);
 
   displaySendCommand(SSD1306_SET_PRE_CHARGE);
   displaySendCommand(0xF1);
@@ -137,4 +137,9 @@ void displaySendData(uint8_t page, uint8_t *data, uint8_t size) {
 	displaySendCommand(SSD1306_SET_LOWER_COLUMN_START_ADDRESS);
 
   displaySend(SSD1306_SET_START_LINE, data, size);
+}
+
+void displaySetContrast(uint8_t value) {
+  displaySendCommand(SSD1306_SET_CONTRAST);
+  displaySendCommand(value);
 }
