@@ -1,23 +1,22 @@
 #include "debug.h"
-#include "oled.h"
+#include "display.h"
 #include "fonts.h"
 
 #define _TIM2_PSC   ((SystemCoreClock / 1000) - 1)
 #define _TIM2_ARR   (1000 - 1)
 
-#define SENSOR_CAP  1   // Емкостной датчик?
-#define SENSOR_PIN  GPIO_Pin_0
-#define PUMP_PIN    GPIO_Pin_2
-#define MOISTURE    60  // Цель для влажности почвы
-#define DELAY_MS    200 // Задержка в основном цикле
-#define FLOOD_STEP  50  // Сколько за шаг полива добавлять в счетчик потопа
-#define FLOOD_MAX   (30 * FLOOD_STEP * 1000 / DELAY_MS) // 30 секунд максимум лить воду до потопа
-#define DISPLAY_SEC 30  // Через сколько секунд график сдвигать вправо
-#define ADC_0       720 // Калибровка для емкостного датчика 0 влажности
-#define ADC_100     620 // Калибровка для емкостного датчика 100 влажности
+#define SENSOR_CAP      1   // Емкостной датчик?
+#define SENSOR_PIN      GPIO_Pin_0
+#define PUMP_PIN        GPIO_Pin_2
+#define MOISTURE        60  // Цель для влажности почвы
+#define DELAY_MS        200 // Задержка в основном цикле
+#define FLOOD_STEP      50  // Сколько за шаг полива добавлять в счетчик потопа
+#define FLOOD_MAX       (30 * FLOOD_STEP * 1000 / DELAY_MS) // 30 секунд максимум лить воду до потопа
+#define DISPLAY_SECONDS 30  // Через сколько секунд график сдвигать вправо
+#define ADC_0           720 // Калибровка для емкостного датчика 0 влажности
+#define ADC_100         620 // Калибровка для емкостного датчика 100 влажности
 
-
-uint8_t displaySec = 0;
+uint8_t displaySecond = 0;
 uint8_t displayBuffer[128];
 uint8_t displayGraf[128];
 extern const uint8_t font8x8[][8];
@@ -26,93 +25,128 @@ const uint8_t levels[] = {0b00000000, 0b10000000, 0b11000000, 0b11100000, 0b1111
 uint8_t moisture = 0;
 
 /**
- * @brief Initialization
+ * @brief Init Port A
  */
-void init() {
-  RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-  
-  // Port A
+void initPortA() {
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
 
-  GPIO_InitTypeDef GPIO_PortA = {0};
-  GPIO_PortA.GPIO_Pin = SENSOR_PIN;
-  GPIO_PortA.GPIO_Mode = GPIO_Mode_AIN;
-  GPIO_Init(GPIOA, &GPIO_PortA);
+  GPIO_InitTypeDef initTypeDef = {0};
+  initTypeDef.GPIO_Pin = SENSOR_PIN;
+  initTypeDef.GPIO_Mode = GPIO_Mode_AIN;
+  GPIO_Init(GPIOA, &initTypeDef);
+}
 
-  // Port C
+/**
+ * @brief Init Port C
+ */
+void initPortC() {
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
   
-  GPIO_InitTypeDef GPIO_PortC = {0};
-  GPIO_PortC.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2;
-  GPIO_PortC.GPIO_Mode = GPIO_Mode_AF_OD;
-  GPIO_PortC.GPIO_Speed = GPIO_Speed_30MHz;
-  GPIO_Init(GPIOC, &GPIO_PortC);
+  GPIO_InitTypeDef initTypeDef = {0};
+  initTypeDef.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2;
+  initTypeDef.GPIO_Mode = GPIO_Mode_AF_OD;
+  initTypeDef.GPIO_Speed = GPIO_Speed_30MHz;
+  GPIO_Init(GPIOC, &initTypeDef);
+}
 
-  // Port D
+/**
+ * @brief Init Port D
+ */
+void initPortD() {
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOD, ENABLE);
 
-  GPIO_InitTypeDef GPIO_PortD = {0};
-  GPIO_PortD.GPIO_Pin = PUMP_PIN;
-  GPIO_PortD.GPIO_Mode = GPIO_Mode_Out_PP;
-  GPIO_PortD.GPIO_Speed = GPIO_Speed_30MHz;
-  GPIO_Init(GPIOD, &GPIO_PortD);
+  GPIO_InitTypeDef initTypeDef = {0};
+  initTypeDef.GPIO_Pin = PUMP_PIN;
+  initTypeDef.GPIO_Mode = GPIO_Mode_Out_PP;
+  initTypeDef.GPIO_Speed = GPIO_Speed_30MHz;
+  GPIO_Init(GPIOD, &initTypeDef);
+}
 
-  // I2C
+/**
+ * @brief Init I2C
+ */
+void initI2C() {
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C1, ENABLE);
-  RCC_ADCCLKConfig(RCC_PCLK2_Div12); // 2 MHz
 
-  I2C_InitTypeDef I2C_Init1 = {0};
-  I2C_Init1.I2C_ClockSpeed = OLED_I2C_SPEED;
-  I2C_Init1.I2C_Mode = I2C_Mode_I2C;
-  I2C_Init1.I2C_DutyCycle = I2C_DutyCycle_2;
-  I2C_Init1.I2C_OwnAddress1 = 0x00;
-  I2C_Init1.I2C_Ack = I2C_Ack_Enable;
-  I2C_Init1.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
-  I2C_Init(I2C1, &I2C_Init1);
+  I2C_InitTypeDef initTypeDef = {0};
+  initTypeDef.I2C_ClockSpeed = DISPLAY_I2C_SPEED;
+  initTypeDef.I2C_Mode = I2C_Mode_I2C;
+  initTypeDef.I2C_DutyCycle = I2C_DutyCycle_2;
+  initTypeDef.I2C_OwnAddress1 = 0x00;
+  initTypeDef.I2C_Ack = I2C_Ack_Enable;
+  initTypeDef.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
+  I2C_Init(I2C1, &initTypeDef);
 
   I2C_Cmd(I2C1, ENABLE);
+}
 
-  // ADC
+/**
+ * @brief Init ADC
+ */
+void initADC() {
+  RCC_ADCCLKConfig(RCC_PCLK2_Div12); // 2 MHz
+
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
   ADC_DeInit(ADC1);
 
-  ADC_InitTypeDef ADC_Init1 = {0};
-  ADC_Init1.ADC_Mode = ADC_Mode_Independent;
-  ADC_Init1.ADC_ScanConvMode = DISABLE;
-  ADC_Init1.ADC_ContinuousConvMode = DISABLE;
-  ADC_Init1.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
-  ADC_Init1.ADC_DataAlign = ADC_DataAlign_Right;
-  ADC_Init1.ADC_NbrOfChannel = 1;
-  ADC_Init(ADC1, &ADC_Init1);
+  ADC_InitTypeDef initTypeDef = {0};
+  initTypeDef.ADC_Mode = ADC_Mode_Independent;
+  initTypeDef.ADC_ScanConvMode = DISABLE;
+  initTypeDef.ADC_ContinuousConvMode = DISABLE;
+  initTypeDef.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
+  initTypeDef.ADC_DataAlign = ADC_DataAlign_Right;
+  initTypeDef.ADC_NbrOfChannel = 1;
+  ADC_Init(ADC1, &initTypeDef);
 
   ADC_Calibration_Vol(ADC1, ADC_CALVOL_50PERCENT);
   ADC_Cmd(ADC1, ENABLE);
 
   ADC_ResetCalibration(ADC1);
   while (ADC_GetResetCalibrationStatus(ADC1));
+
   ADC_StartCalibration(ADC1);
   while (ADC_GetCalibrationStatus(ADC1));
+}
 
-  // TIM2
+/**
+ * @brief Init TIM2
+ */
+void initTIM2() {
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
     
-  TIM_TimeBaseInitTypeDef TIMBase_InitStruct2 = {0};
-  TIMBase_InitStruct2.TIM_ClockDivision = TIM_CKD_DIV1;
-  TIMBase_InitStruct2.TIM_Prescaler = _TIM2_PSC;
-  TIMBase_InitStruct2.TIM_Period = _TIM2_ARR;
-  TIMBase_InitStruct2.TIM_CounterMode = TIM_CounterMode_Up;
-  TIM_TimeBaseInit(TIM2, &TIMBase_InitStruct2);
+  TIM_TimeBaseInitTypeDef timInitTypeDef = {0};
+  timInitTypeDef.TIM_ClockDivision = TIM_CKD_DIV1;
+  timInitTypeDef.TIM_Prescaler = _TIM2_PSC;
+  timInitTypeDef.TIM_Period = _TIM2_ARR;
+  timInitTypeDef.TIM_CounterMode = TIM_CounterMode_Up;
+  TIM_TimeBaseInit(TIM2, &timInitTypeDef);
 
   TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
 
-  NVIC_InitTypeDef NVIC_InitStruct2 = {0};
-  NVIC_InitStruct2.NVIC_IRQChannel = TIM2_IRQn;
-  NVIC_InitStruct2.NVIC_IRQChannelPreemptionPriority = 0;
-  NVIC_InitStruct2.NVIC_IRQChannelSubPriority = 1;
-  NVIC_InitStruct2.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStruct2);
+  NVIC_InitTypeDef nvicInitTypeDef = {0};
+  nvicInitTypeDef.NVIC_IRQChannel = TIM2_IRQn;
+  nvicInitTypeDef.NVIC_IRQChannelPreemptionPriority = 0;
+  nvicInitTypeDef.NVIC_IRQChannelSubPriority = 1;
+  nvicInitTypeDef.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&nvicInitTypeDef);
   
   TIM_Cmd(TIM2, ENABLE);
+}
+
+/**
+ * @brief Initialization
+ */
+void init() {
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+  
+  initPortA();
+  initPortC();
+  initPortD();
+  
+  initI2C();
+  initADC();
+
+  initTIM2();
 }
 
 /**
@@ -129,22 +163,21 @@ uint16_t getAdcValue(uint8_t channel) {
 }
 
 /**
- * IRQ Timer 2
+ * @brief IRQ Timer 2
  */
 void TIM2_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void TIM2_IRQHandler(void) {
   if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
-    if (displaySec < DISPLAY_SEC) {
-      displaySec++;
+    if (displaySecond < DISPLAY_SECONDS) {
+      displaySecond++;
     } else {
-      displaySec = 0;
+      displaySecond = 0;
       
       for (uint8_t p = 127; p > 0; p--) {
         displayGraf[p] = displayGraf[p - 1];
       }
       displayGraf[0] = moisture;
     }
-    
     
     TIM_ClearITPendingBit(TIM2, TIM_IT_Update); 
   }
@@ -172,7 +205,7 @@ int main(void) {
   printf("ChipID: %08x\r\n", DBGMCU_GetCHIPID());
 
   init();
-  oledInit();
+  displayInit();
 
   char buff[17];
   uint16_t flood = 0;
@@ -193,7 +226,7 @@ int main(void) {
           displayBuffer[p] = 0;
         }
       }
-      oledWriteData(level, displayBuffer, sizeof(displayBuffer));
+      displaySendData(level, displayBuffer, sizeof(displayBuffer));
     }
 
 
@@ -207,7 +240,7 @@ int main(void) {
 #endif
     sprintf(buff, "M: %3d, F: %4d.", moisture, flood);
     text(buff, displayBuffer);
-    oledWriteData(3, displayBuffer, sizeof(displayBuffer));
+    displaySendData(3, displayBuffer, sizeof(displayBuffer));
 
     if (moisture < MOISTURE && flood < FLOOD_MAX) {
       GPIO_WriteBit(GPIOD, PUMP_PIN, Bit_SET);

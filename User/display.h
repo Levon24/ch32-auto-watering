@@ -1,16 +1,16 @@
-#ifndef _OLED_H
-#define _OLED_H
+#ifndef _DISPLAY_H
+#define _DISPLAY_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#define OLED_WIDTH    128	// 128 Pixels
-#define OLED_HEIGHT   32  // 32  Pixels
+#define DISPLAY_WIDTH    128	// 128 Pixels
+#define DISPLAY_HEIGHT   32   // 32  Pixels
 
-#define OLED_I2C_SPEED    400000
-#define OLED_I2C_ADDRESS  0x78
-#define OLED_I2C_WAIT     250
+#define DISPLAY_I2C_SPEED    400000
+#define DISPLAY_I2C_ADDRESS  0x78
+#define DISPLAY_I2C_WAIT     250
 
 // commands
 #define SSD1306_DISPLAY_OFF                     0xAE
@@ -46,16 +46,15 @@ extern "C" {
 #define SSD1306_VERT_AND_RIGHT_HORIZ_SCROLL 0x29
 #define SSD1306_VERT_AND_LEFT_HORIZ_SCROLL  0x2A
 
+#define DISPLAY_CMD_DISPLAY_ON			  0xAF
+#define DISPLAY_CMD_NORMAL_DISPLAY		0xA6
+#define DISPLAY_CMD_INVERSE_DISPLAY	  0xA7
+#define DISPLAY_CMD_SET_BRIGHTNESS		0x81
 
-#define OLED_CMD_DISPLAY_ON			  0xAF
-#define OLED_CMD_NORMAL_DISPLAY		0xA6
-#define OLED_CMD_INVERSE_DISPLAY	0xA7
-#define OLED_CMD_SET_BRIGHTNESS		0x81
-
-void oledInit();
-void oledWrite(uint8_t command, uint8_t *data, uint8_t size);
-void oledSetCursor(uint8_t x, uint8_t y);
-void oledWriteData(uint8_t page,uint8_t *data, uint8_t size);
+void displayInit();
+void displaySend(uint8_t command, uint8_t *data, uint8_t size);
+void displaySetCursor(uint8_t x, uint8_t y);
+void displaySendData(uint8_t page,uint8_t *data, uint8_t size);
 
 #ifdef __cplusplus
 }
