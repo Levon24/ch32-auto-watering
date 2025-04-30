@@ -208,10 +208,10 @@ void TIM2_IRQHandler(void) {
 void readMoisture() {
   // read sensor
   uint16_t adcValue = getAdcValue(ADC_Channel_0);
+  printf("ADC: %d\r\n", adcValue);
 
   // calculate moisture
 #if (SENSOR_CAP == 1)
-  printf("ADC: %d\r\n", adcValue);
   moisture = ADC_0 - adcValue;
 #else
   moisture = (1023 - adcValue) / 10;
