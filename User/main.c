@@ -16,9 +16,12 @@
 #define ADC_0           720 // Калибровка для емкостного датчика 0 влажности
 #define ADC_100         620 // Калибровка для емкостного датчика 100 влажности
 
-uint8_t displaySecond = 0;
-uint8_t displayBuffer[128];
-uint8_t displayGraf[128];
+uint8_t seconds = 0;
+uint8_t chartBuffer[128];
+uint8_t chartValues[128];
+uint8_t displayState = DISPLAY_SHOW_CHART;
+uint16_t flood = 0;
+
 extern const uint8_t font8x8[][8];
 const uint8_t levels[] = {0b00000000, 0b10000000, 0b11000000, 0b11100000, 0b11110000, 0b11111000, 0b11111100, 0b11111110, 0b11111111};
 
@@ -168,19 +171,84 @@ uint16_t getAdcValue(uint8_t channel) {
 void TIM2_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void TIM2_IRQHandler(void) {
   if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
-    if (displaySecond < DISPLAY_SECONDS) {
-      displaySecond++;
+    if (seconds < DISPLAY_SECONDS) {
+      seconds++;
     } else {
-      displaySecond = 0;
+      seconds = 0;
       
       for (uint8_t p = 127; p > 0; p--) {
-        displayGraf[p] = displayGraf[p - 1];
+        chartValues[p] = chartValues[p - 1];
       }
-      displayGraf[0] = moisture;
+      chartValues[0] = moisture;
     }
     
     TIM_ClearITPendingBit(TIM2, TIM_IT_Update); 
   }
+}
+
+/**
+ * @brief Read sensor & calc moisture
+ */
+void readMoisture() {
+  // read sensor
+  uint16_t adcValue = getAdcValue(ADC_Channel_0);
+
+  // calculate moisture
+#if (SENSOR_CAP == 1)
+  printf("ADC: %d\r\n", adcValue);
+  moisture = ADC_0 - adcValue;
+#else
+  moisture = (1023 - adcValue) / 10;
+#endif
+}
+
+/**
+ * @brief pump control
+ */
+void turnPump() {
+  if (moisture < MOISTURE && flood < FLOOD_MAX) {
+    GPIO_WriteBit(GPIOD, PUMP_PIN, Bit_SET);
+    flood = flood + FLOOD_STEP;
+  } else {
+    GPIO_WriteBit(GPIOD, PUMP_PIN, Bit_RESET);
+  }
+
+  if (flood > 0) {
+    flood--;
+  }
+}
+
+/**
+ * @brief display graf
+ */
+void showChart() {
+  char buff[17];
+  
+  for (uint8_t level = 0; level < 3; level++) {
+    for (uint8_t p = 0; p < 128; p++) {
+      if (chartValues[p] > (2 - level) * 32) {
+        uint8_t l = (chartValues[p] - (2 - level) * 32) >> 2;
+        if (l > 8) {
+          l = 8;
+        }
+        chartBuffer[p] = levels[l];
+      } else {
+        chartBuffer[p] = 0;
+      }
+    }
+    displaySendData(level, chartBuffer, sizeof(chartBuffer));
+  }
+
+  sprintf(buff, "M: %3d, F: %4d.", moisture, flood);
+  text(buff, chartBuffer);
+  displaySendData(3, chartBuffer, sizeof(chartBuffer));
+}
+
+/**
+ * @brief display settings
+ */
+void showSettings() {
+
 }
 
 /*********************************************************************
@@ -207,49 +275,20 @@ int main(void) {
   init();
   displayInit();
 
-  char buff[17];
-  uint16_t flood = 0;
-
   while (1) {
-    GPIO_WriteBit(GPIOD, PUMP_PIN, Bit_RESET);
+    readMoisture();
+    turnPump();
 
-    // Graf
-    for (uint8_t level = 0; level < 3; level++) {
-      for (uint8_t p = 0; p < 128; p++) {
-        if (displayGraf[p] > (2 - level) * 32) {
-          uint8_t l = (displayGraf[p] - (2 - level) * 32) >> 2;
-          if (l > 8) {
-            l = 8;
-          }
-          displayBuffer[p] = levels[l];
-        } else {
-          displayBuffer[p] = 0;
-        }
-      }
-      displaySendData(level, displayBuffer, sizeof(displayBuffer));
+    switch (displayState) {
+      case DISPLAY_SHOW_CHART:
+        showChart();
+        break;
+      
+      case DISPLAY_SHOW_SETTINGS:
+        showSettings();
+        break;
     }
-
-
-    // Values
-    uint16_t adcValue = getAdcValue(ADC_Channel_0);
-#if (SENSOR_CAP == 1)
-    printf("ADC: %d\r\n", adcValue);
-    moisture = ADC_0 - adcValue;
-#else
-    moisture = (1023 - adcValue) / 10;
-#endif
-    sprintf(buff, "M: %3d, F: %4d.", moisture, flood);
-    text(buff, displayBuffer);
-    displaySendData(3, displayBuffer, sizeof(displayBuffer));
-
-    if (moisture < MOISTURE && flood < FLOOD_MAX) {
-      GPIO_WriteBit(GPIOD, PUMP_PIN, Bit_SET);
-      flood = flood + FLOOD_STEP;
-    }
-
+    
     Delay_Ms(DELAY_MS);
-    if (flood > 0) {
-      flood--;
-    }
   }
 }

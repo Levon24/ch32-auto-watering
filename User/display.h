@@ -37,7 +37,7 @@ extern "C" {
 #define SSD1306_SET_HIGHER_COLUMN_START_ADDRESS 0x10
 #define SSD1306_SET_LOWER_COLUMN_START_ADDRESS  0x00
 
-// Scrolling #defines
+// Scrolling defines
 #define SSD1306_ACTIVATE_SCROLL             0x2F
 #define SSD1306_DEACTIVATE_SCROLL           0x2E
 #define SSD1306_SET_VERTICAL_SCROLL_AREA    0xA3
@@ -50,6 +50,9 @@ extern "C" {
 #define DISPLAY_CMD_NORMAL_DISPLAY		0xA6
 #define DISPLAY_CMD_INVERSE_DISPLAY	  0xA7
 #define DISPLAY_CMD_SET_BRIGHTNESS		0x81
+
+#define DISPLAY_SHOW_CHART      0x00
+#define DISPLAY_SHOW_SETTINGS   0x01
 
 void displayInit();
 void displaySend(uint8_t command, uint8_t *data, uint8_t size);
