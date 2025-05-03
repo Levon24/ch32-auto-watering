@@ -13,6 +13,8 @@
 #define FLOOD_STEP      50  // Сколько за шаг полива добавлять в счетчик потопа
 #define FLOOD_MAX       (30 * FLOOD_STEP * 1000 / DELAY_MS) // 30 секунд максимум лить воду до потопа
 #define DISPLAY_SECONDS 30  // Через сколько секунд график сдвигать вправо
+#define ADC_VREF        1.2 // 1.2V 
+#define ADC_VCC         3.3 // 3.3V
 #define ADC_0           720 // Калибровка для емкостного датчика 0 влажности
 #define ADC_100         620 // Калибровка для емкостного датчика 100 влажности
 
@@ -65,7 +67,6 @@ void initPortC() {
   initButtons.GPIO_Mode = GPIO_Mode_IPU;
   initButtons.GPIO_Speed = GPIO_Speed_30MHz;
   GPIO_Init(GPIOC, &initButtons);
-
 }
 
 /**
@@ -208,11 +209,12 @@ void TIM2_IRQHandler(void) {
 void readMoisture() {
   // read sensor
   uint16_t adcValue = getAdcValue(ADC_Channel_0);
-  printf("ADC: %d\r\n", adcValue);
+  //printf("ADC: %d\r\n", adcValue);
 
   // calculate moisture
 #if (SENSOR_CAP == 1)
-  moisture = ADC_0 - adcValue;
+  uint16_t adcVref = getAdcValue(ADC_Channel_Vrefint);
+  moisture = (ADC_VCC - ((float) ADC_VREF / adcVref) * adcValue) * 10; // U
 #else
   moisture = (1023 - adcValue) / 10;
 #endif
@@ -255,7 +257,7 @@ void showChart(uint16_t buttons) {
     displaySendData(level, displayLine, sizeof(displayLine));
   }
 
-  sprintf(buff, "M: %3d, F: %4d.", moisture, flood);
+  sprintf(buff, "M: %3d%% F: %5d", moisture, flood);
   text(buff, displayLine);
   displaySendData(3, displayLine, sizeof(displayLine));
 
