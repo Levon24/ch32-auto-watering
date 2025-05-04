@@ -13,10 +13,10 @@
 #define FLOOD_STEP      50  // Сколько за шаг полива добавлять в счетчик потопа
 #define FLOOD_MAX       (30 * FLOOD_STEP * 1000 / DELAY_MS) // 30 секунд максимум лить воду до потопа
 #define DISPLAY_SECONDS 30  // Через сколько секунд график сдвигать вправо
-#define ADC_VREF        1.2 // 1.2V 
-#define ADC_VCC         3.3 // 3.3V
-#define ADC_0           720 // Калибровка для емкостного датчика 0 влажности
-#define ADC_100         620 // Калибровка для емкостного датчика 100 влажности
+#define U_VREF        1.2 // 1.2V 
+#define U_VCC         3.3 // 3.3V
+#define U_DRY         3.0 // Калибровка для емкостного датчика 0 влажности
+#define U_WET         1.5 // Калибровка для емкостного датчика 100 влажности
 
 #define BUTTON_SETTINGS GPIO_Pin_3
 #define BUTTON_NEXT     GPIO_Pin_4
@@ -214,7 +214,12 @@ void readMoisture() {
   // calculate moisture
 #if (SENSOR_CAP == 1)
   uint16_t adcVref = getAdcValue(ADC_Channel_Vrefint);
-  moisture = (ADC_VCC - ((float) ADC_VREF / adcVref) * adcValue) * 10; // U
+  float u = ((float) U_VREF / adcVref) * adcValue;
+  if (u > U_DRY) {
+    moisture = 0;
+  } else {
+    moisture = ((U_DRY - u) * 100) / (U_DRY - U_WET);
+  }
 #else
   moisture = (1023 - adcValue) / 10;
 #endif
