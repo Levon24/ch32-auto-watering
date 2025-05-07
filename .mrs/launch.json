@@ -5,12 +5,12 @@
 			"type": "mrs-debugger",
 			"request": "launch",
 			"name": "ch32-auto-watering",
-			"cwd": "/home/levon/Programing/CH32/ch32-auto-watering",
+			"cwd": "d:\\Projects\\CH32\\ch32-auto-watering",
 			"openOCDCfg": {
 				"useLocalOpenOCD": true,
-				"executable": "/home/levon/programs/MRS2/MRS-linux-x64/resources/app/resources/linux/components/WCH/OpenOCD/OpenOCD/bin/openocd",
+				"executable": "d:/Programs/MounRiver/MounRiver_Studio2/resources/app/resources/win32/components/WCH/OpenOCD/OpenOCD/bin/openocd.exe",
 				"configOptions": [
-					"-f \"/home/levon/programs/MRS2/MRS-linux-x64/resources/app/resources/linux/components/WCH/OpenOCD/OpenOCD/bin/wch-riscv.cfg\" -c \"chip_id CH32V003\""
+					"-f \"d:/Programs/MounRiver/MounRiver_Studio2/resources/app/resources/win32/components/WCH/OpenOCD/OpenOCD/bin/wch-riscv.cfg\" -c \"chip_id CH32V003\""
 				],
 				"gdbport": 3333,
 				"telnetport": 4444,
@@ -22,7 +22,7 @@
 				"enableNoZeroWaitingAreaFlash": false
 			},
 			"gdbCfg": {
-				"executable": "/home/levon/programs/MRS2/MRS-linux-x64/resources/app/resources/linux/components/WCH/Toolchain/RISC-V Embedded GCC/bin/riscv-none-embed-gdb",
+				"executable": "d:/Programs/MounRiver/MounRiver_Studio2/resources/app/resources/win32/components/WCH/Toolchain/RISC-V Embedded GCC/bin/riscv-none-embed-gdb.exe",
 				"commands": [
 					"set mem inaccessible-by-default off",
 					"set architecture riscv:rv32",
@@ -39,8 +39,8 @@
 					"additionalCommands": []
 				},
 				"loadedFiles": {
-					"executableFile": "/home/levon/Programing/CH32/ch32-auto-watering/obj/ch32-auto-watering.elf",
-					"symbolFile": "/home/levon/Programing/CH32/ch32-auto-watering/obj/ch32-auto-watering.elf",
+					"executableFile": "d:\\Projects\\CH32\\ch32-auto-watering\\obj\\ch32-auto-watering.elf",
+					"symbolFile": "d:\\Projects\\CH32\\ch32-auto-watering\\obj\\ch32-auto-watering.elf",
 					"executableFileOffset": 0,
 					"symbolFileOffset": 0
 				},
@@ -54,7 +54,7 @@
 				},
 				"debugInRAM": false
 			},
-			"svdpath": "/home/levon/programs/MRS2/MRS-linux-x64/resources/app/resources/linux/components/WCH/SDK/default/RISC-V/CH32V003/NoneOS/CH32V003xx.svd",
+			"svdpath": "d:\\Programs\\MounRiver\\MounRiver_Studio2\\resources\\app\\resources\\win32\\components\\WCH\\SDK\\default/RISC-V/CH32V003/NoneOS/CH32V003xx.svd",
 			"output": {
 				"showDebugGDBTrace": true,
 				"saveDebugOutputToFile": false,
