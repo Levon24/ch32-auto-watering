@@ -9,14 +9,17 @@
 #define SENSOR_PIN      GPIO_Pin_0
 #define PUMP_PIN        GPIO_Pin_2
 #define MOISTURE        80  // Цель для влажности почвы
-#define DELAY_MS        250 // Задержка в основном цикле
-#define FLOOD_STEP      50  // Сколько за шаг полива добавлять в счетчик потопа
-#define FLOOD_MAX       (30 * FLOOD_STEP * 1000 / DELAY_MS) // 30 секунд максимум лить воду до потопа
-#define DISPLAY_SECONDS 30  // Через сколько секунд график сдвигать вправо
-#define U_VREF        1.2 // 1.2V 
-#define U_VCC         3.3 // 3.3V
-#define U_DRY         2.74 // Калибровка для емкостного датчика 0 влажности (для v1.2 = 2.193, для v2.0 = 2.752)
-#define U_WET         1.29 // Калибровка для емкостного датчика 100 влажности (для v1.2 = 1.06, для v2.0 = 1.304)
+#define DELAY_MS        200 // Задержка в основном цикле
+#define FLOOD_STEP      30  // Сколько за шаг полива добавлять в счетчик потопа
+#define FLOOD_MAX       (30 * FLOOD_STEP * 1000) / DELAY_MS // 30 секунд максимум лить воду до потопа
+#define FLOOD_NEXT      FLOOD_MAX / 2
+#define CHART_SECONDS   5  // Через сколько секунд график сдвигать вправо
+#define CHART_SIZE      8 * 3
+#define CHART_MAX       10
+#define U_VREF          1.2 // 1.2V 
+#define U_VCC           3.3 // 3.3V
+#define U_DRY           2.74 // Калибровка для емкостного датчика 0 влажности (для v1.2 = 2.193, для v2.0 = 2.752)
+#define U_WET           1.29 // Калибровка для емкостного датчика 100 влажности (для v1.2 = 1.06, для v2.0 = 1.304)
 
 #define BUTTON_SETTINGS GPIO_Pin_3
 #define BUTTON_NEXT     GPIO_Pin_4
@@ -188,7 +191,7 @@ uint16_t getAdcValue(uint8_t channel) {
 void TIM2_IRQHandler(void) __attribute__((interrupt("WCH-Interrupt-fast")));
 void TIM2_IRQHandler(void) {
   if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET) {
-    if (seconds < DISPLAY_SECONDS) {
+    if (seconds < CHART_SECONDS) {
       seconds++;
     } else {
       seconds = 0;
@@ -229,7 +232,7 @@ void readMoisture() {
  * @brief pump control
  */
 void turnPump() {
-  if (moisture < minMoisture && flood < FLOOD_MAX) {
+  if (moisture < minMoisture && flood < FLOOD_NEXT) {
     GPIO_WriteBit(GPIOD, PUMP_PIN, Bit_SET);
     flood = flood + FLOOD_STEP;
   } else {
@@ -247,19 +250,33 @@ void turnPump() {
 void showChart(uint16_t buttons) {
   char buff[17];
   
-  for (uint8_t level = 0; level < 3; level++) {
+  for (uint8_t position = 0; position < 3; position++) {
     for (uint8_t p = 0; p < 128; p++) {
-      if (chartValues[p] > (2 - level) * 32) {
-        uint8_t l = (chartValues[p] - (2 - level) * 32) >> 2;
-        if (l > 8) {
-          l = 8;
+      uint8_t value = chartValues[p];
+
+      uint8_t maxValue = minMoisture + CHART_MAX;
+      if (value > maxValue) {
+        value = maxValue;
+      }
+
+      uint8_t minValue = maxValue - CHART_SIZE;
+      if (value < minValue) {
+        value = minValue;
+      }
+
+      value = value - minValue;
+
+      if (value > (2 - position) * 8) {
+        uint8_t level = value - (2 - position) * 8;
+        if (level > 8) {
+          level = 8;
         }
-        displayLine[p] = levels[l];
+        displayLine[p] = levels[level];
       } else {
         displayLine[p] = 0;
       }
     }
-    displaySendData(level, displayLine, sizeof(displayLine));
+    displaySendData(position, displayLine, sizeof(displayLine));
   }
 
   sprintf(buff, "M: %3d%% F: %5d", moisture, flood);
