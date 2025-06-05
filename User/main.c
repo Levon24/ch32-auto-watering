@@ -12,7 +12,6 @@
 #define DELAY_MS        200 // Задержка в основном цикле
 #define FLOOD_STEP      30  // Сколько за шаг полива добавлять в счетчик потопа
 #define FLOOD_MAX       (30 * FLOOD_STEP * 1000) / DELAY_MS // 30 секунд максимум лить воду до потопа
-#define FLOOD_NEXT      FLOOD_MAX / 2
 #define CHART_SECONDS   5  // Через сколько секунд график сдвигать вправо
 #define CHART_SIZE      8 * 3
 #define CHART_MAX       10
@@ -232,7 +231,7 @@ void readMoisture() {
  * @brief pump control
  */
 void turnPump() {
-  if (moisture < minMoisture && flood < FLOOD_NEXT) {
+  if (moisture < minMoisture && flood < FLOOD_MAX) {
     GPIO_WriteBit(GPIOD, PUMP_PIN, Bit_SET);
     flood = flood + FLOOD_STEP;
   } else {
