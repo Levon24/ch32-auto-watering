@@ -104,16 +104,16 @@ void displayInit() {
   displaySendCommand(0x00);
   displaySendCommand(0x07);
 
-  displaySendCommand(SSD1306_SET_CONTRAST);
-  displaySendCommand(DISPLAY_DEFAULT_CONTRAST);
+	displaySendCommand(SSD1306_SET_CONTRAST);
+	displaySendCommand(DISPLAY_DEFAULT_CONTRAST);
 
-  displaySendCommand(SSD1306_SET_PRE_CHARGE);
-  displaySendCommand(0xF1);
+	//displaySendCommand(SSD1306_SET_PRE_CHARGE);
+	//displaySendCommand(0xF1);
 
-  displaySendCommand(SSD1306_SET_V_COM_DETECT);
-  displaySendCommand(0x40);
-  
-  displaySendCommand(SSD1306_DISPLAY_ALLON_RESUME);
+	displaySendCommand(SSD1306_SET_V_COM_DETECT);
+	displaySendCommand(0x40);
+
+	displaySendCommand(SSD1306_DISPLAY_ALLON_RESUME);
 
 	displaySendCommand(SSD1306_DISPLAY_ON);
 }
@@ -122,8 +122,8 @@ void displaySetCursor(uint8_t x, uint8_t y) {
 	// Y - 1 unit = 1 page (8 pixel rows)
 	// X - 1 unit = 8 pixel columns
 
-  displaySendCommand(0x00 | (8 * x & 0x0F)); 		      // Set column lower address
-  displaySendCommand(0x10 | ((8 * x >> 4) & 0x0F));   // Set column higher address
+	displaySendCommand(0x00 | (8 * x & 0x0F)); 		      // Set column lower address
+	displaySendCommand(0x10 | ((8 * x >> 4) & 0x0F));   // Set column higher address
 	displaySendCommand(0xB0 | y);                       // Set page address
 }
 
@@ -132,14 +132,14 @@ void displaySendData(uint8_t page, uint8_t *data, uint8_t size) {
 	//displaySendCommand(0x00);
 	//displaySendCommand(0x07);
 
-  displaySendCommand(SSD1306_SET_PAGE_START_ADDRESS | page);
+	displaySendCommand(SSD1306_SET_PAGE_START_ADDRESS | page);
 	displaySendCommand(SSD1306_SET_HIGHER_COLUMN_START_ADDRESS);
 	displaySendCommand(SSD1306_SET_LOWER_COLUMN_START_ADDRESS);
 
-  displaySend(SSD1306_SET_START_LINE, data, size);
+	displaySend(SSD1306_SET_START_LINE, data, size);
 }
 
 void displaySetContrast(uint8_t value) {
-  displaySendCommand(SSD1306_SET_CONTRAST);
-  displaySendCommand(value);
+	displaySendCommand(SSD1306_SET_CONTRAST);
+	displaySendCommand(value);
 }
