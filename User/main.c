@@ -9,16 +9,16 @@
 #define SENSOR_PIN      GPIO_Pin_0
 #define PUMP_PIN        GPIO_Pin_2
 #define MOISTURE        80  // Цель для влажности почвы
-#define DELAY_MS        200 // Задержка в основном цикле
-#define FLOOD_STEP      30  // Сколько за шаг полива добавлять в счетчик потопа
+#define DELAY_MS        125 // Задержка в основном цикле
+#define FLOOD_STEP      4   // Сколько за шаг полива добавлять в счетчик потопа
 #define FLOOD_MAX       (30 * FLOOD_STEP * 1000) / DELAY_MS // 30 секунд максимум лить воду до потопа
 #define CHART_SECONDS   5  // Через сколько секунд график сдвигать вправо
 #define CHART_SIZE      8 * 3
 #define CHART_MAX       10
 #define U_VREF          1.2 // 1.2V 
 #define U_VCC           3.3 // 3.3V
-#define U_DRY           2.273 // Калибровка для емкостного датчика 0 влажности (для v1.2 = 2.193, для v2.0 = 2.752)
-#define U_WET           1.080 // Калибровка для емкостного датчика 100 влажности (для v1.2 = 1.06, для v2.0 = 1.304)
+#define U_DRY           2.78 // Калибровка для емкостного датчика 0 влажности (для v1.2 = 2.193, для v2.0 = 2.752)
+#define U_WET           1.11 // Калибровка для емкостного датчика 100 влажности (для v1.2 = 1.06, для v2.0 = 1.304)
 
 #define BUTTON_SETTINGS GPIO_Pin_3
 #define BUTTON_NEXT     GPIO_Pin_4
