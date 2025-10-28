@@ -1,37 +1,33 @@
 #include "debug.h"
 #include "display.h"
 #include "fonts.h"
+#include "buttons.h"
 
 #define _TIM2_PSC   ((SystemCoreClock / 1000) - 1)
 #define _TIM2_ARR   (1000 - 1)
 
-#define SENSOR_CAP      1   // Емкостной датчик?
+#define SENSOR_CAP      1 // Емкостной датчик?
 #define SENSOR_PIN      GPIO_Pin_0
 #define PUMP_PIN        GPIO_Pin_2
-#define MOISTURE        80  // Цель для влажности почвы
-#define DELAY_MS        125 // Задержка в основном цикле
-#define FLOOD_STEP      4   // Сколько за шаг полива добавлять в счетчик потопа
+#define MOISTURE        80 // Цель для влажности почвы
+#define DELAY_MS        50 // Задержка в основном цикле, 20 кадров в секунду
+#define FLOOD_STEP      5  // Сколько за шаг полива добавлять в счетчик потопа
 #define FLOOD_MAX       (30 * FLOOD_STEP * 1000) / DELAY_MS // 30 секунд максимум лить воду до потопа
 #define CHART_SECONDS   5  // Через сколько секунд график сдвигать вправо
 #define CHART_SIZE      8 * 3
 #define CHART_MAX       10
 #define U_VREF          1.2 // 1.2V 
 #define U_VCC           3.3 // 3.3V
-#define U_DRY           2.78 // Калибровка для емкостного датчика 0 влажности (для v1.2 = 2.193, для v2.0 = 2.752)
-#define U_WET           1.11 // Калибровка для емкостного датчика 100 влажности (для v1.2 = 1.06, для v2.0 = 1.304)
-
-#define BUTTON_SETTINGS GPIO_Pin_3
-#define BUTTON_NEXT     GPIO_Pin_4
-#define BUTTON_UP       GPIO_Pin_5
-#define BUTTON_DOWN     GPIO_Pin_6
-#define BUTTON_PRESSED  0
+#define U_DRY           2.26 // Калибровка для емкостного датчика 0 влажности (для v1.2 = 2.193, для v2.0 = 2.752)
+#define U_WET           1.10 // Калибровка для емкостного датчика 100 влажности (для v1.2 = 1.06, для v2.0 = 1.304)
 
 uint8_t seconds = 0;
 uint8_t displayLine[128];
 uint8_t chartValues[128];
-enum _state state = show_chart;
-enum _setup setup = setup_min_moisture; 
-uint16_t flood = 0;
+
+extern enum display_state state;
+extern enum display_setup setup;
+extern _button_t buttons[BUTTONS];
 
 extern const uint8_t font8x8[][8];
 const uint8_t levels[] = {0b00000000, 0b10000000, 0b11000000, 0b11100000, 0b11110000, 0b11111000, 0b11111100, 0b11111110, 0b11111111};
@@ -39,6 +35,7 @@ const uint8_t levels[] = {0b00000000, 0b10000000, 0b11000000, 0b11100000, 0b1111
 uint8_t contrast = DISPLAY_DEFAULT_CONTRAST;
 uint8_t moisture = 0;
 uint8_t minMoisture = MOISTURE;
+uint16_t flood = 0;
 
 /**
  * @brief Init Port A
@@ -65,7 +62,7 @@ void initPortC() {
   GPIO_Init(GPIOC, &initI2C);
 
   GPIO_InitTypeDef initButtons = {0};
-  initButtons.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6;
+  initButtons.GPIO_Pin = BUTTON_SETTINGS | BUTTON_NEXT | BUTTON_UP | BUTTON_DOWN;
   initButtons.GPIO_Mode = GPIO_Mode_IPU;
   initButtons.GPIO_Speed = GPIO_Speed_30MHz;
   GPIO_Init(GPIOC, &initButtons);
@@ -246,7 +243,7 @@ void turnPump() {
 /**
  * @brief display graf
  */
-void showChart(uint16_t buttons) {
+void showChart() {
   char buff[17];
   
   for (uint8_t position = 0; position < 3; position++) {
@@ -282,7 +279,7 @@ void showChart(uint16_t buttons) {
   text(buff, displayLine);
   displaySendData(3, displayLine, sizeof(displayLine));
 
-  if ((buttons & BUTTON_SETTINGS) == BUTTON_PRESSED) {
+  if (buttons[settings].pressed > 0) {
     state = show_settings;
   }
 }
@@ -290,7 +287,7 @@ void showChart(uint16_t buttons) {
 /**
  * @brief display settings
  */
-void showSettings(uint16_t buttons) {
+void showSettings() {
   char buff[17];
 
   text(" -= Settings =- ", displayLine);
@@ -307,11 +304,11 @@ void showSettings(uint16_t buttons) {
   clear(displayLine, sizeof(displayLine));
   displaySendData(3, displayLine, sizeof(displayLine));
 
-  if ((buttons & BUTTON_SETTINGS) == BUTTON_PRESSED) {
+  if (buttons[settings].pressed > 0) {
     state = show_chart;
   }
 
-  if ((buttons & BUTTON_NEXT) == BUTTON_PRESSED) {
+  if (buttons[next].pressed > 0) {
     if (setup < setup_contrast) {
       setup++;
     } else {
@@ -319,7 +316,7 @@ void showSettings(uint16_t buttons) {
     }
   }
 
-  if ((buttons & BUTTON_UP) == BUTTON_PRESSED) {
+  if (buttons[up].pressed > 0) {
     switch (setup) {
       case setup_min_moisture:
         if (minMoisture < 100) {
@@ -336,7 +333,7 @@ void showSettings(uint16_t buttons) {
     }
   }
 
-  if ((buttons & BUTTON_DOWN) == BUTTON_PRESSED) {
+  if (buttons[down].pressed > 0) {
     switch (setup) {
       case setup_min_moisture:
         if (minMoisture > 0) {
@@ -382,14 +379,14 @@ int main(void) {
     readMoisture();
     turnPump();
 
-    uint16_t buttons = GPIO_ReadInputData(GPIOC);
+    buttons_scan();
     switch (state) {
       case show_chart:
-        showChart(buttons);
+        showChart();
         break;
       
       case show_settings:
-        showSettings(buttons); 
+        showSettings(); 
         break;
     }
     

@@ -2,6 +2,9 @@
 #include <ch32v00x.h>
 #include "display.h"
 
+enum display_state state = show_chart;
+enum display_setup setup = setup_min_moisture;
+
 /**
  * Send data to display
  * 

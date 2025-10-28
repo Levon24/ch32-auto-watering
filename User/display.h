@@ -52,12 +52,12 @@ extern "C" {
 #define DISPLAY_CMD_NORMAL_DISPLAY		0xA6
 #define DISPLAY_CMD_INVERSE_DISPLAY	  0xA7
 
-enum _state {
+enum display_state {
   show_chart, 
   show_settings
 };
 
-enum _setup {
+enum display_setup {
   setup_min_moisture,
   setup_contrast
 };
