@@ -27,4 +27,4 @@ The price of oled display 1$.
 ![oled-display](Docs/oled-display.png)
 
 ### Pump
-So, if the soil moisture is insufficient, the device begins to continuously dispense water until a set time threshold is reached, or until the soil reaches the desired moisture level. The time threshold is configured in the source code. I used the smallest CJWP08 pump, which costs about 0.5$, so I set the threshold to 30 seconds of continuous watering. The pump then switches to drip mode, releasing a drop of water every set time until the desired moisture level is reached.
+So, if the soil moisture is insufficient, the device begins to continuously dispense water until a set time threshold is reached, or until the soil reaches the desired moisture level. The time threshold is configured in the source code. I used the smallest **CJWP08** pump, which costs about 0.5$, so I set the threshold to 30 seconds of continuous watering. The pump then switches to drip mode, releasing a drop of water every set time until the desired moisture level is reached.
