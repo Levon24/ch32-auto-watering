@@ -13,13 +13,14 @@
 #define DELAY_MS        50 // Задержка в основном цикле, 20 кадров в секунду
 #define FLOOD_STEP      5  // Сколько за шаг полива добавлять в счетчик потопа
 #define FLOOD_MAX       (30 * FLOOD_STEP * 1000) / DELAY_MS // 30 секунд максимум лить воду до потопа
+#define FLOOD_MIN       FLOOD_MAX - ((FLOOD_STEP * 1000) / DELAY_MS) // По сколько после перелива доливать воды
 #define CHART_SECONDS   5  // Через сколько секунд график сдвигать вправо
 #define CHART_SIZE      8 * 3
 #define CHART_MAX       10
 #define U_VREF          1.2 // 1.2V 
 #define U_VCC           3.3 // 3.3V
-#define U_DRY           2.26 // Калибровка для емкостного датчика 0 влажности (для v1.2 = 2.193, для v2.0 = 2.752)
-#define U_WET           1.10 // Калибровка для емкостного датчика 100 влажности (для v1.2 = 1.06, для v2.0 = 1.304)
+#define U_DRY           2.275 // Калибровка для емкостного датчика 0 влажности (для v1.2 = 2.193, для v2.0 = 2.752)
+#define U_WET           1.141 // Калибровка для емкостного датчика 100 влажности (для v1.2 = 1.06, для v2.0 = 1.304)
 
 uint8_t seconds = 0;
 uint8_t displayLine[128];
@@ -36,6 +37,7 @@ uint8_t contrast = DISPLAY_DEFAULT_CONTRAST;
 uint8_t moisture = 0;
 uint8_t minMoisture = MOISTURE;
 uint16_t flood = 0;
+uint8_t pump = 0;
 
 /**
  * @brief Init Port A
@@ -229,9 +231,17 @@ void readMoisture() {
  */
 void turnPump() {
   if (moisture < minMoisture && flood < FLOOD_MAX) {
-    GPIO_WriteBit(GPIOD, PUMP_PIN, Bit_SET);
-    flood = flood + FLOOD_STEP;
+    if (flood < FLOOD_MIN) {
+      pump = 1; // Turn on
+    }
+
+    if (pump > 0) {
+      GPIO_WriteBit(GPIOD, PUMP_PIN, Bit_SET);
+      flood = flood + FLOOD_STEP;
+    }
   } else {
+    pump = 0; // Turn off
+
     GPIO_WriteBit(GPIOD, PUMP_PIN, Bit_RESET);
   }
 
