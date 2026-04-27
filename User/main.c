@@ -10,7 +10,7 @@
 #define SENSOR_PIN      GPIO_Pin_0
 #define PUMP_PIN        GPIO_Pin_2
 #define MOISTURE        80 // Цель для влажности почвы
-#define DELAY_MS        50 // Задержка в основном цикле, 20 кадров в секунду
+#define DELAY_MS        120 // Задержка в основном цикле
 #define FLOOD_STEP      5  // Сколько за шаг полива добавлять в счетчик потопа
 #define FLOOD_MAX       (30 * FLOOD_STEP * 1000) / DELAY_MS // 30 секунд максимум лить воду до потопа
 #define FLOOD_MIN       FLOOD_MAX - ((FLOOD_STEP * 1000) / DELAY_MS) // По сколько после перелива доливать воды
@@ -18,9 +18,8 @@
 #define CHART_SIZE      8 * 3
 #define CHART_MAX       10
 #define U_VREF          1.2 // 1.2V 
-#define U_VCC           3.3 // 3.3V
-#define U_DRY           2.275 // Калибровка для емкостного датчика 0 влажности (для v1.2 = 2.193, для v2.0 = 2.752)
-#define U_WET           1.141 // Калибровка для емкостного датчика 100 влажности (для v1.2 = 1.06, для v2.0 = 1.304)
+#define U_DRY           2.2070 // Калибровка для емкостного датчика 0 влажности (для v1.2 = 2.193, для v2.0 = 2.752)
+#define U_WET           0.9285 // Калибровка для емкостного датчика 100 влажности (для v1.2 = 1.06, для v2.0 = 1.304)
 
 uint8_t seconds = 0;
 uint8_t displayLine[128];
@@ -60,13 +59,13 @@ void initPortC() {
   GPIO_InitTypeDef initI2C = {0};
   initI2C.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2;
   initI2C.GPIO_Mode = GPIO_Mode_AF_OD;
-  initI2C.GPIO_Speed = GPIO_Speed_30MHz;
+  initI2C.GPIO_Speed = GPIO_Speed_2MHz;
   GPIO_Init(GPIOC, &initI2C);
 
   GPIO_InitTypeDef initButtons = {0};
   initButtons.GPIO_Pin = BUTTON_SETTINGS | BUTTON_NEXT | BUTTON_UP | BUTTON_DOWN;
   initButtons.GPIO_Mode = GPIO_Mode_IPU;
-  initButtons.GPIO_Speed = GPIO_Speed_30MHz;
+  initButtons.GPIO_Speed = GPIO_Speed_2MHz;
   GPIO_Init(GPIOC, &initButtons);
 }
 
@@ -79,7 +78,7 @@ void initPortD() {
   GPIO_InitTypeDef initTypeDef = {0};
   initTypeDef.GPIO_Pin = PUMP_PIN;
   initTypeDef.GPIO_Mode = GPIO_Mode_Out_PP;
-  initTypeDef.GPIO_Speed = GPIO_Speed_30MHz;
+  initTypeDef.GPIO_Speed = GPIO_Speed_2MHz;
   GPIO_Init(GPIOD, &initTypeDef);
 }
 
@@ -119,7 +118,7 @@ void initADC() {
   initTypeDef.ADC_NbrOfChannel = 1;
   ADC_Init(ADC1, &initTypeDef);
 
-  ADC_Calibration_Vol(ADC1, ADC_CALVOL_50PERCENT);
+  ADC_Calibration_Vol(ADC1, ADC_CALVOL_75PERCENT);
   ADC_Cmd(ADC1, ENABLE);
 
   ADC_ResetCalibration(ADC1);
@@ -210,7 +209,6 @@ void TIM2_IRQHandler(void) {
 void readMoisture() {
   // read sensor
   uint16_t adcValue = getAdcValue(ADC_Channel_0);
-  //printf("ADC: %d\r\n", adcValue);
 
   // calculate moisture
 #if (SENSOR_CAP == 1)
@@ -224,6 +222,7 @@ void readMoisture() {
 #else
   moisture = (1023 - adcValue) / 10;
 #endif
+  printf("ADC: %d, %d\r\n", adcValue, adcVref);
 }
 
 /**
