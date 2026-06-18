@@ -10,7 +10,7 @@
 #define SENSOR_PIN      GPIO_Pin_0
 #define PUMP_PIN        GPIO_Pin_2
 #define MOISTURE        80 // Цель для влажности почвы
-#define DELAY_MS        120 // Задержка в основном цикле
+#define DELAY_MS        50 // Задержка в основном цикле
 #define FLOOD_STEP      5  // Сколько за шаг полива добавлять в счетчик потопа
 #define FLOOD_MAX       (30 * FLOOD_STEP * 1000) / DELAY_MS // 30 секунд максимум лить воду до потопа
 #define FLOOD_MIN       FLOOD_MAX - ((FLOOD_STEP * 1000) / DELAY_MS) // По сколько после перелива доливать воды
