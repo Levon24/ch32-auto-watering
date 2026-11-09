@@ -12,7 +12,7 @@ extern "C" {
 #define DISPLAY_I2C_ADDRESS  0x78
 #define DISPLAY_I2C_WAIT     250
 
-#define DISPLAY_DEFAULT_CONTRAST  0x7F
+#define DISPLAY_DEFAULT_CONTRAST  0x1F
 
 // commands
 #define SSD1306_DISPLAY_OFF                     0xAE

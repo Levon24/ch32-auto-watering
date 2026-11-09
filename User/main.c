@@ -30,7 +30,7 @@ extern enum display_setup setup;
 extern _button_t buttons[BUTTONS];
 
 extern const uint8_t font8x8[][8];
-const uint8_t levels[] = {0b00000000, 0b10000000, 0b11000000, 0b11100000, 0b11110000, 0b11111000, 0b11111100, 0b11111110, 0b11111111};
+const uint8_t levels[] = {0b00000000, 0b10000000, 0b01000000, 0b00100000, 0b00010000, 0b00001000, 0b00000100, 0b00000010, 0b00000001};
 
 uint8_t contrast = DISPLAY_DEFAULT_CONTRAST;
 uint8_t moisture = 0;
